@@ -85,7 +85,7 @@ export const createEntityService = <T extends BaseEntity>(entityName: string) =>
 
 // Specific entity services
 export const employeeService = createEntityService('employees')
-export const leaveRequestService = createEntityService('leave-requests')
+export const leaveRequestService = createEntityService('leaveRequests')
 export const userService = createEntityService('users')
 
 // Authentication service
