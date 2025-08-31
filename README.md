@@ -1,4 +1,4 @@
-# Employee Management System
+# Employee Management System 2
 
 A modern, responsive web application for managing employee records, leave requests, and HR operations. Built with React, TypeScript, and Tailwind CSS.
 
