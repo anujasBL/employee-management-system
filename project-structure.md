@@ -1,191 +1,416 @@
-# Project Structure Overview
+# Project Structure Documentation
 
-## 📁 Complete File Tree
+## Overview
+
+This document provides a comprehensive overview of the Employee Management System project structure, explaining the purpose and organization of each directory and file.
+
+## Root Directory Structure
 
 ```
 employee-management-system/
-├── .github/
-│   └── workflows/
-│       └── ci.yml                    # GitHub Actions CI/CD pipeline
-├── src/
-│   ├── components/
-│   │   ├── Layout.tsx               # Main layout with navigation
-│   │   ├── LoginForm.tsx            # Authentication form
-│   │   ├── ProtectedRoute.tsx       # Route protection & role-based access
-│   │   └── ErrorBoundary.tsx        # Error handling component
-│   ├── contexts/
-│   │   └── AuthContext.tsx          # Authentication state management
-│   ├── pages/
-│   │   ├── LoginPage.tsx            # Login page wrapper
-│   │   ├── HRDashboard.tsx          # HR dashboard with metrics
-│   │   └── EmployeeDashboard.tsx    # Employee dashboard with personal info
-│   ├── services/
-│   │   └── api.ts                   # Generic API service layer
-│   ├── types/
-│   │   └── index.ts                 # TypeScript type definitions
-│   ├── App.tsx                      # Main application component
-│   ├── main.tsx                     # Application entry point
-│   └── index.css                    # Global styles & Tailwind CSS
-├── .eslintrc.cjs                    # ESLint configuration
-├── .gitignore                       # Git ignore patterns
-├── .nvmrc                           # Node.js version specification
-├── .prettierrc                      # Prettier code formatting
-├── env.example                      # Environment variables template
-├── index.html                       # HTML entry point
-├── package.json                     # Dependencies & scripts
-├── postcss.config.js                # PostCSS configuration
-├── project-structure.md             # This file
-├── README.md                        # Project documentation
-├── tailwind.config.js               # Tailwind CSS configuration
-├── tsconfig.json                    # TypeScript configuration
-├── tsconfig.node.json               # Node.js TypeScript config
-└── vite.config.ts                   # Vite build configuration
+├── .github/                    # GitHub-specific configurations
+│   └── workflows/             # CI/CD pipeline configurations
+├── docs/                      # Project documentation
+├── public/                    # Static assets
+├── rules/                     # Development rules and prompts
+├── src/                       # Source code
+├── .eslintrc.cjs             # ESLint configuration
+├── .nvmrc                    # Node.js version specification
+├── .prettierrc               # Prettier configuration
+├── env.example               # Environment variables template
+├── jest.config.js            # Jest testing configuration
+├── package.json              # Project dependencies and scripts
+├── postcss.config.js         # PostCSS configuration
+├── project-structure.md      # This file
+├── README.md                 # Project overview and setup
+├── tailwind.config.js        # Tailwind CSS configuration
+├── tsconfig.json             # TypeScript configuration
+├── tsconfig.node.json        # TypeScript configuration for Node.js
+├── vercel.json               # Vercel deployment configuration
+└── vite.config.ts            # Vite build configuration
 ```
 
-## 🏗️ Architecture Overview
+## Configuration Files
 
-### **Core Structure**
-- **Entry Point**: `main.tsx` with providers setup
-- **App Component**: `App.tsx` with routing configuration
-- **Layout System**: `Layout.tsx` with responsive navigation
-- **Authentication**: `AuthContext.tsx` with JWT token management
+### Build and Development Tools
 
-### **Component Organization**
-- **Components**: Reusable UI components in `/components`
-- **Pages**: Route-specific page components in `/pages`
-- **Contexts**: Global state management in `/contexts`
-- **Services**: API integration layer in `/services`
-- **Types**: TypeScript definitions in `/types`
+#### `vite.config.ts`
+- **Purpose**: Vite build tool configuration
+- **Key Features**:
+  - React plugin configuration
+  - Path aliases for clean imports
+  - Build optimization settings
+  - Development server configuration
 
-### **Configuration Files**
-- **Build Tools**: Vite configuration with React plugin
-- **Styling**: Tailwind CSS with PostCSS processing
-- **Code Quality**: ESLint + Prettier for consistent code
-- **Type Safety**: TypeScript with strict mode enabled
-- **CI/CD**: GitHub Actions workflow for automation
+#### `tsconfig.json`
+- **Purpose**: TypeScript compiler configuration
+- **Key Features**:
+  - Strict mode enabled
+  - Path mapping for clean imports
+  - Modern ES2020 target
+  - React JSX support
 
-## 🔧 Key Features Implemented
+#### `tailwind.config.js`
+- **Purpose**: Tailwind CSS configuration
+- **Key Features**:
+  - Custom color palette
+  - Custom animations
+  - Responsive breakpoints
+  - Component-specific utilities
 
-### **1. Authentication System**
-- ✅ JWT token-based authentication
-- ✅ Role-based access control (HR/Employee)
-- ✅ Protected routes with automatic redirects
-- ✅ Session management with localStorage
-- ✅ Login form with validation
+#### `postcss.config.js`
+- **Purpose**: PostCSS processing configuration
+- **Key Features**:
+  - Tailwind CSS integration
+  - Autoprefixer for cross-browser compatibility
 
-### **2. Navigation & Layout**
-- ✅ Responsive navigation menu
-- ✅ Role-specific menu items
-- ✅ Mobile-friendly design
-- ✅ Breadcrumb navigation
-- ✅ User profile display
+### Code Quality Tools
 
-### **3. Dashboard System**
-- ✅ HR dashboard with metrics
-- ✅ Employee dashboard with personal info
-- ✅ Leave balance tracking
-- ✅ Recent activity display
-- ✅ Quick action buttons
+#### `.eslintrc.cjs`
+- **Purpose**: ESLint code quality rules
+- **Key Features**:
+  - TypeScript support
+  - React-specific rules
+  - Consistent code style enforcement
 
-### **4. API Integration**
-- ✅ Generic entity service layer
-- ✅ Axios HTTP client with interceptors
-- ✅ Error handling and retry logic
-- ✅ Request/response type safety
-- ✅ Environment-based configuration
+#### `.prettierrc`
+- **Purpose**: Code formatting configuration
+- **Key Features**:
+  - Consistent indentation
+  - Quote and semicolon preferences
+  - Line length limits
 
-### **5. State Management**
-- ✅ React Query for server state
-- ✅ Context API for global state
-- ✅ Form state with React Hook Form
-- ✅ Validation with Zod schemas
-- ✅ Optimistic updates support
+#### `jest.config.js`
+- **Purpose**: Jest testing framework configuration
+- **Key Features**:
+  - React Testing Library setup
+  - Coverage reporting
+  - Mock configurations
 
-## 🚀 Development Workflow
+### Environment and Deployment
 
-### **Local Development**
-1. `npm install` - Install dependencies
-2. `npm run dev` - Start development server
-3. `npm run lint` - Check code quality
-4. `npm run type-check` - Verify TypeScript
-5. `npm run build` - Build for production
+#### `env.example`
+- **Purpose**: Environment variables template
+- **Key Variables**:
+  - API configuration
+  - Authentication settings
+  - Feature flags
+  - Build configuration
 
-### **Code Quality**
-- ESLint for code linting
-- Prettier for code formatting
-- TypeScript for type safety
-- React Hooks rules enforcement
-- Consistent code style
+#### `vercel.json`
+- **Purpose**: Vercel deployment configuration
+- **Key Features**:
+  - Build commands
+  - Routing rules
+  - Environment variable mapping
 
-### **Testing & Validation**
-- Jest + React Testing Library setup
-- Component testing framework
-- Mock API responses
-- Error boundary testing
-- Accessibility testing support
+#### `.nvmrc`
+- **Purpose**: Node.js version specification
+- **Version**: 18.18.0 (LTS)
 
-## 📱 Responsive Design
+## Source Code Structure (`src/`)
 
-### **Breakpoints**
-- **Mobile**: 320px - 768px
-- **Tablet**: 768px - 1024px
-- **Desktop**: 1024px+
+### Core Application Files
 
-### **Design System**
-- Custom CSS variables for theming
-- Consistent spacing and typography
-- Accessible color contrast
-- Interactive hover states
-- Loading and error states
+#### `main.tsx`
+- **Purpose**: Application entry point
+- **Responsibilities**:
+  - React DOM rendering
+  - Root component mounting
+  - Global CSS imports
 
-## 🔐 Security Features
+#### `App.tsx`
+- **Purpose**: Main application component
+- **Responsibilities**:
+  - Routing configuration
+  - Context providers
+  - Error boundaries
+  - Protected route setup
 
-### **Authentication**
-- JWT token validation
-- Automatic token refresh
-- Secure logout process
-- Role-based route protection
-- Session timeout handling
+#### `index.css`
+- **Purpose**: Global styles and Tailwind CSS
+- **Features**:
+  - Tailwind directives
+  - Custom CSS variables
+  - Component utility classes
+  - Responsive design utilities
 
-### **API Security**
-- Request/response interceptors
-- Automatic token injection
-- Unauthorized access handling
-- Error logging and monitoring
-- CORS configuration support
+### Component Architecture
 
-## 🌐 Deployment Ready
+#### `components/` Directory
+```
+components/
+├── ErrorBoundary.tsx         # Error handling wrapper
+├── Layout.tsx               # Main application layout
+├── LoginForm.tsx            # Authentication form
+└── ProtectedRoute.tsx       # Route protection logic
+```
 
-### **Build Optimization**
-- Code splitting by route
-- Tree shaking for unused code
-- Asset optimization
-- Source map generation
-- Bundle size analysis
+**Component Design Principles**:
+- **Reusability**: Components are designed for reuse across the application
+- **Composition**: Complex UIs are built from simple, composable components
+- **Accessibility**: ARIA labels and semantic HTML for screen readers
+- **Responsiveness**: Mobile-first design with progressive enhancement
 
-### **Platform Support**
-- Vercel deployment ready
-- Static hosting compatible
-- Environment variable support
-- SSL certificate ready
-- Custom domain support
+#### `pages/` Directory
+```
+pages/
+├── LoginPage.tsx            # Login page wrapper
+├── HRDashboard.tsx          # HR user dashboard
+└── EmployeeDashboard.tsx    # Employee user dashboard
+```
 
-## 📊 Performance Features
+**Page Design Principles**:
+- **Single Responsibility**: Each page handles one specific user workflow
+- **Data Fetching**: Pages coordinate data from multiple services
+- **Layout Integration**: Pages work with the main Layout component
+- **Error Handling**: Graceful error states and loading indicators
 
-### **Optimizations**
-- React 18 concurrent features
-- Lazy loading support
-- Image optimization
-- Caching strategies
-- Bundle optimization
+### State Management
 
-### **Monitoring**
-- Performance metrics
-- Error tracking
-- User analytics
-- Load time optimization
-- Memory usage monitoring
+#### `contexts/` Directory
+```
+contexts/
+└── AuthContext.tsx          # Authentication state management
+```
+
+**Context Design Principles**:
+- **Global State**: Shared state across component tree
+- **Performance**: Optimized re-renders with useReducer
+- **Persistence**: Local storage integration for user sessions
+- **Error Handling**: Comprehensive error states and recovery
+
+#### `services/` Directory
+```
+services/
+└── api.ts                  # Generic API service layer
+```
+
+**Service Design Principles**:
+- **Generic Design**: Reusable for any entity type
+- **Error Handling**: Consistent error processing and user feedback
+- **Authentication**: Automatic token management and refresh
+- **Caching**: Integration with React Query for data caching
+
+### Type System
+
+#### `types/` Directory
+```
+types/
+└── index.ts                # Centralized type definitions
+```
+
+**Type System Features**:
+- **Comprehensive Coverage**: All data structures are typed
+- **Strict Mode**: TypeScript strict mode enabled
+- **Generic Types**: Reusable type patterns for entities
+- **API Contracts**: Clear interfaces for API communication
+
+### Testing Infrastructure
+
+#### `setupTests.ts`
+- **Purpose**: Test environment configuration
+- **Features**:
+  - Jest DOM matchers
+  - Browser API mocks
+  - Console error filtering
+  - Global test utilities
+
+## Documentation Structure (`docs/`)
+
+### `software-requirements-specification.md`
+- **Purpose**: Detailed functional and non-functional requirements
+- **Content**:
+  - User stories and acceptance criteria
+  - Technical architecture specifications
+  - Security and performance requirements
+  - Testing and deployment strategies
+
+### `development-roadmap.md`
+- **Purpose**: Iterative development plan
+- **Content**:
+  - Phase-by-phase feature delivery
+  - Timeline and resource allocation
+  - Risk mitigation strategies
+  - Success metrics and checkpoints
+
+### `user-stories.md`
+- **Purpose**: User-centric feature specifications
+- **Content**:
+  - Prioritized user stories
+  - Acceptance criteria
+  - Complexity estimates
+  - Dependencies and relationships
+
+## Development Rules (`rules/`)
+
+### `mvp-coding-prompt.md`
+- **Purpose**: Development guidelines and standards
+- **Content**:
+  - Code quality requirements
+  - Testing standards
+  - Documentation requirements
+  - Deployment procedures
+
+### Other Rule Files
+- Development workflow guidelines
+- Testing strategies
+- Quality assurance procedures
+- Pre-push validation rules
+
+## GitHub Workflows (`.github/workflows/`)
+
+### `ci.yml`
+- **Purpose**: Continuous integration pipeline
+- **Features**:
+  - Automated testing
+  - Code quality checks
+  - Build verification
+  - Deployment automation
+
+**Pipeline Stages**:
+1. **Quality Gate**: Linting, type checking, testing
+2. **Build**: Production build creation
+3. **Deploy**: Automated deployment to Vercel
+
+## Public Assets (`public/`)
+
+### Static Files
+- **Purpose**: Publicly accessible assets
+- **Content**:
+  - Favicon and app icons
+  - Static images
+  - Public configuration files
+  - Manifest files for PWA support
+
+## Build Output (`dist/`)
+
+### Production Build
+- **Purpose**: Optimized production files
+- **Content**:
+  - Minified JavaScript bundles
+  - Optimized CSS files
+  - Static assets
+  - Source maps (development)
+
+## Development Workflow
+
+### 1. Setup Phase
+```bash
+# Install dependencies
+npm install
+
+# Environment configuration
+cp env.example .env
+
+# Start development server
+npm run dev
+```
+
+### 2. Development Phase
+```bash
+# Code quality checks
+npm run lint
+npm run type-check
+
+# Testing
+npm run test
+npm run test:watch
+
+# Formatting
+npm run format
+```
+
+### 3. Build Phase
+```bash
+# Production build
+npm run build
+
+# Preview build
+npm run preview
+```
+
+### 4. Deployment Phase
+```bash
+# Deploy to Vercel
+vercel --prod
+
+# Or manual deployment
+# Upload dist/ folder to hosting provider
+```
+
+## File Naming Conventions
+
+### Components
+- **PascalCase**: `LoginForm.tsx`, `HRDashboard.tsx`
+- **Descriptive Names**: Clear indication of component purpose
+- **Consistent Suffixes**: `.tsx` for React components
+
+### Utilities and Services
+- **camelCase**: `api.ts`, `setupTests.ts`
+- **Descriptive Names**: Clear indication of functionality
+- **Consistent Extensions**: `.ts` for TypeScript files
+
+### Configuration Files
+- **Dot Prefix**: `.eslintrc.cjs`, `.prettierrc`
+- **Standard Names**: Industry-standard configuration file names
+- **Clear Extensions**: `.js`, `.json`, `.ts` based on content
+
+## Import Organization
+
+### Path Aliases
+```typescript
+// Clean imports using path aliases
+import { useAuth } from '@/contexts/AuthContext';
+import { LoginForm } from '@/components/LoginForm';
+import { User } from '@/types';
+```
+
+### Import Order
+1. **React and Core Libraries**
+2. **Third-party Libraries**
+3. **Internal Components**
+4. **Internal Utilities**
+5. **Types and Interfaces**
+
+## Code Organization Principles
+
+### 1. Separation of Concerns
+- **Components**: UI presentation and user interaction
+- **Services**: Business logic and data management
+- **Types**: Data structure definitions
+- **Contexts**: Global state management
+
+### 2. Single Responsibility
+- Each file has one clear purpose
+- Functions and components do one thing well
+- Clear boundaries between different layers
+
+### 3. Reusability
+- Components designed for reuse
+- Utility functions are generic
+- Types are composable and extensible
+
+### 4. Maintainability
+- Clear file organization
+- Consistent naming conventions
+- Comprehensive documentation
+- Automated quality checks
+
+## Future Considerations
+
+### Scalability
+- **Component Library**: Expand reusable component collection
+- **State Management**: Consider Redux for complex state
+- **Testing**: Add E2E testing with Playwright
+- **Performance**: Implement code splitting and lazy loading
+
+### Maintenance
+- **Dependency Updates**: Regular security and feature updates
+- **Code Quality**: Continuous improvement of linting rules
+- **Documentation**: Keep documentation in sync with code
+- **Testing**: Maintain high test coverage
 
 ---
 
-**This bootstrap phase provides a solid foundation for the Employee Management System with all core infrastructure in place.**
+This project structure is designed to support rapid development, maintainable code, and scalable architecture while following React and TypeScript best practices.

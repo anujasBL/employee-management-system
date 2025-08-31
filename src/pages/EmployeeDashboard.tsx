@@ -1,245 +1,304 @@
-import React from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { User, Calendar, Clock, FileText } from 'lucide-react'
-import { dashboardService } from '@/services/api'
-import { useAuth } from '@/contexts/AuthContext'
+// React is not directly used in this component
+import { useAuth } from '@/contexts/AuthContext';
+import { Calendar, User, FileText, CheckCircle, XCircle, Clock as PendingIcon } from 'lucide-react';
 
 /**
- * Employee Dashboard page component
- * Displays personal information and leave management for employees
+ * EmployeeDashboard component that displays personal information and leave status for employees
+ * Shows leave balance, recent requests, and personal information
  */
-export const EmployeeDashboard: React.FC = () => {
-  const { user } = useAuth()
-  const { data: dashboardData, isLoading, error } = useQuery({
-    queryKey: ['employee-dashboard'],
-    queryFn: dashboardService.getEmployeeData,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  })
+export function EmployeeDashboard() {
+  const { user } = useAuth();
 
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {[1, 2].map((i) => (
-              <div key={i} className="h-32 bg-gray-200 rounded"></div>
-            ))}
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="rounded-md bg-destructive/10 p-4">
-        <p className="text-sm text-destructive">
-          Error loading dashboard data. Please try again.
-        </p>
-      </div>
-    )
-  }
-
-  // Mock data for demo purposes
-  const mockData = {
-    personalInfo: {
-      id: '1',
-      userId: '1',
-      employeeId: 'EMP001',
-      firstName: 'John',
-      lastName: 'Doe',
-      email: 'john.doe@company.com',
-      department: 'Engineering',
-      position: 'Software Developer',
-      hireDate: new Date('2023-01-15'),
-      isActive: true,
-      leaveBalance: 15,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+  // Mock data for Iteration 1 - will be replaced with real API calls in Iteration 2
+  const mockEmployeeData = {
+    leaveBalance: {
+      vacation: 15,
+      sick: 10,
+      personal: 5,
+      total: 30,
     },
-    leaveBalance: 15,
     recentRequests: [
       {
-        id: '1',
-        employeeId: '1',
-        leaveType: 'vacation',
-        startDate: new Date('2024-12-20'),
-        endDate: new Date('2024-12-22'),
-        reason: 'Family vacation',
+        id: 1,
+        type: 'vacation',
+        startDate: '2024-01-15',
+        endDate: '2024-01-19',
         status: 'approved',
-        submittedAt: new Date('2024-12-01'),
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        reason: 'Family vacation',
+        submittedAt: '2024-01-02',
       },
       {
-        id: '2',
-        employeeId: '1',
-        leaveType: 'sick',
-        startDate: new Date('2024-12-10'),
-        endDate: new Date('2024-12-10'),
+        id: 2,
+        type: 'sick',
+        startDate: '2024-01-10',
+        endDate: '2024-01-10',
+        status: 'approved',
         reason: 'Not feeling well',
+        submittedAt: '2024-01-09',
+      },
+      {
+        id: 3,
+        type: 'personal',
+        startDate: '2024-01-25',
+        endDate: '2024-01-25',
         status: 'pending',
-        submittedAt: new Date('2024-12-08'),
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        reason: 'Doctor appointment',
+        submittedAt: '2024-01-20',
       },
     ],
-  }
+    upcomingLeaves: [
+      {
+        id: 1,
+        type: 'vacation',
+        startDate: '2024-01-15',
+        endDate: '2024-01-19',
+        days: 5,
+      },
+    ],
+  };
 
-  const data = dashboardData || mockData
+  const leaveTypeColors = {
+    vacation: 'bg-blue-100 text-blue-800',
+    sick: 'bg-red-100 text-red-800',
+    personal: 'bg-purple-100 text-purple-800',
+    maternity: 'bg-pink-100 text-pink-800',
+    paternity: 'bg-indigo-100 text-indigo-800',
+  };
 
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
+  const statusColors = {
+    approved: 'bg-success-100 text-success-800',
+    rejected: 'bg-danger-100 text-danger-800',
+    pending: 'bg-warning-100 text-warning-800',
+    cancelled: 'bg-gray-100 text-gray-800',
+  };
+
+  const statusIcons = {
+    approved: CheckCircle,
+    rejected: XCircle,
+    pending: PendingIcon,
+    cancelled: XCircle,
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
-    }).format(new Date(date))
-  }
+      year: 'numeric',
+    });
+  };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'approved':
-        return 'text-green-600 bg-green-100'
-      case 'pending':
-        return 'text-yellow-600 bg-yellow-100'
-      case 'rejected':
-        return 'text-red-600 bg-red-100'
-      default:
-        return 'text-gray-600 bg-gray-100'
-    }
-  }
-
-  const getLeaveTypeIcon = (type: string) => {
-    switch (type) {
-      case 'vacation':
-        return '🏖️'
-      case 'sick':
-        return '🏥'
-      case 'personal':
-        return '👤'
-      default:
-        return '📅'
-    }
-  }
+  const calculateDays = (startDate: string, endDate: string) => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const diffTime = Math.abs(end.getTime() - start.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays + 1; // Include both start and end dates
+  };
 
   return (
     <div className="space-y-6">
-      {/* Page header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Employee Dashboard</h1>
-        <p className="text-gray-600">Welcome back, {user?.firstName}!</p>
+      {/* Welcome Header */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">
+          Welcome back, {user?.firstName}!
+        </h1>
+        <p className="text-gray-600">
+          Here's your personal dashboard with leave information and recent activity.
+        </p>
       </div>
 
-      {/* Personal information and leave balance */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Personal info card */}
-        <div className="card p-6">
-          <div className="flex items-center mb-4">
-            <User className="h-6 w-6 text-primary mr-2" />
-            <h3 className="text-lg font-medium text-gray-900">Personal Information</h3>
+      {/* Leave Balance Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Total Leave Balance</p>
+              <p className="text-2xl font-bold text-primary-600">{mockEmployeeData.leaveBalance.total}</p>
+              <p className="text-xs text-gray-500 mt-1">Available days</p>
+            </div>
+            <div className="p-3 bg-primary-50 rounded-lg">
+              <Calendar className="h-6 w-6 text-primary-600" />
+            </div>
           </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Vacation Days</p>
+              <p className="text-2xl font-bold text-blue-600">{mockEmployeeData.leaveBalance.vacation}</p>
+              <p className="text-xs text-gray-500 mt-1">Remaining</p>
+            </div>
+            <div className="p-3 bg-blue-50 rounded-lg">
+              <Calendar className="h-6 w-6 text-blue-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Sick Days</p>
+              <p className="text-2xl font-bold text-red-600">{mockEmployeeData.leaveBalance.sick}</p>
+              <p className="text-xs text-gray-500 mt-1">Remaining</p>
+            </div>
+            <div className="p-3 bg-red-50 rounded-lg">
+              <Calendar className="h-6 w-6 text-red-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Personal Days</p>
+              <p className="text-2xl font-bold text-purple-600">{mockEmployeeData.leaveBalance.personal}</p>
+              <p className="text-xs text-gray-500 mt-1">Remaining</p>
+            </div>
+            <div className="p-3 bg-purple-50 rounded-lg">
+              <Calendar className="h-6 w-6 text-purple-600" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Quick Actions and Upcoming Leaves */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Quick Actions */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
           <div className="space-y-3">
-            <div>
-              <p className="text-sm text-gray-600">Employee ID</p>
-              <p className="font-medium">{data.personalInfo.employeeId}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Department</p>
-              <p className="font-medium">{data.personalInfo.department}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Position</p>
-              <p className="font-medium">{data.personalInfo.position}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Hire Date</p>
-              <p className="font-medium">{formatDate(data.personalInfo.hireDate)}</p>
-            </div>
+            <a
+              href="/leave-requests/new"
+              className="flex items-center p-3 rounded-lg border border-gray-200 hover:border-primary-300 hover:bg-primary-50 transition-colors duration-200"
+            >
+              <div className="p-2 bg-primary-100 rounded-lg mr-3">
+                <Calendar className="h-5 w-5 text-primary-600" />
+              </div>
+              <div>
+                <h3 className="font-medium text-gray-900">Request Leave</h3>
+                <p className="text-sm text-gray-600">Submit a new leave request</p>
+              </div>
+            </a>
+
+            <a
+              href="/profile"
+              className="flex items-center p-3 rounded-lg border border-gray-200 hover:border-primary-300 hover:bg-primary-50 transition-colors duration-200"
+            >
+              <div className="p-2 bg-primary-100 rounded-lg mr-3">
+                <User className="h-5 w-5 text-primary-600" />
+              </div>
+              <div>
+                <h3 className="font-medium text-gray-900">Update Profile</h3>
+                <p className="text-sm text-gray-600">Edit your personal information</p>
+              </div>
+            </a>
+
+            <a
+              href="/leave-requests"
+              className="flex items-center p-3 rounded-lg border border-gray-200 hover:border-primary-300 hover:bg-primary-50 transition-colors duration-200"
+            >
+              <div className="p-2 bg-primary-100 rounded-lg mr-3">
+                <FileText className="h-5 w-5 text-primary-600" />
+              </div>
+              <div>
+                <h3 className="font-medium text-gray-900">View All Requests</h3>
+                <p className="text-sm text-gray-600">Check status of your requests</p>
+              </div>
+            </a>
           </div>
         </div>
 
-        {/* Leave balance card */}
-        <div className="card p-6">
-          <div className="flex items-center mb-4">
-            <Calendar className="h-6 w-6 text-green-500 mr-2" />
-            <h3 className="text-lg font-medium text-gray-900">Leave Balance</h3>
-          </div>
-          <div className="text-center">
-            <div className="text-4xl font-bold text-green-600 mb-2">
-              {data.leaveBalance}
-            </div>
-            <p className="text-sm text-gray-600">Days Remaining</p>
-          </div>
-          <div className="mt-4">
-            <button className="btn-primary w-full">
-              <FileText className="h-4 w-4 mr-2" />
-              Request Leave
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Recent leave requests */}
-      <div className="card p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-medium text-gray-900">Recent Leave Requests</h3>
-          <Clock className="h-5 w-5 text-gray-400" />
-        </div>
-        <div className="space-y-3">
-          {data.recentRequests.length > 0 ? (
-            data.recentRequests.map((request) => (
-              <div key={request.id} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-b-0">
-                <div className="flex items-center space-x-3">
-                  <span className="text-2xl">{getLeaveTypeIcon(request.leaveType)}</span>
-                  <div>
-                    <p className="font-medium text-gray-900 capitalize">
-                      {request.leaveType} Leave
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      {formatDate(request.startDate)} - {formatDate(request.endDate)}
-                    </p>
-                    <p className="text-sm text-gray-500">{request.reason}</p>
+        {/* Upcoming Leaves */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Upcoming Leaves</h2>
+          {mockEmployeeData.upcomingLeaves.length > 0 ? (
+            <div className="space-y-3">
+              {mockEmployeeData.upcomingLeaves.map((leave) => (
+                <div key={leave.id} className="p-3 rounded-lg bg-blue-50 border border-blue-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-blue-900 capitalize">{leave.type}</p>
+                      <p className="text-sm text-blue-700">
+                        {formatDate(leave.startDate)} - {formatDate(leave.endDate)}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-lg font-bold text-blue-600">{leave.days}</p>
+                      <p className="text-xs text-blue-600">days</p>
+                    </div>
                   </div>
                 </div>
-                <div className="text-right">
-                  <span
-                    className={`inline-flex px-2 py-1 text-xs font-medium rounded-full capitalize ${getStatusColor(
-                      request.status
-                    )}`}
-                  >
-                    {request.status}
-                  </span>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {formatDate(request.submittedAt)}
-                  </p>
-                </div>
-              </div>
-            ))
+              ))}
+            </div>
           ) : (
             <div className="text-center py-8">
-              <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-              <p className="text-gray-500">No leave requests yet</p>
-              <p className="text-sm text-gray-400">Submit your first leave request to get started</p>
+              <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+              <p className="text-gray-500">No upcoming leaves scheduled</p>
             </div>
           )}
         </div>
       </div>
 
-      {/* Quick actions */}
-      <div className="card p-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Quick Actions</h3>
+      {/* Recent Leave Requests */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Recent Leave Requests</h2>
+        <div className="space-y-3">
+          {mockEmployeeData.recentRequests.map((request) => {
+            const StatusIcon = statusIcons[request.status as keyof typeof statusIcons];
+            const days = calculateDays(request.startDate, request.endDate);
+            
+            return (
+              <div key={request.id} className="p-4 rounded-lg border border-gray-200 hover:border-gray-300 transition-colors duration-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className={`px-2 py-1 rounded-full text-xs font-medium ${leaveTypeColors[request.type as keyof typeof leaveTypeColors]}`}>
+                      {request.type}
+                    </div>
+                    <div className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[request.status as keyof typeof statusColors]} flex items-center`}>
+                      <StatusIcon className="h-3 w-3 mr-1" />
+                      {request.status}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-medium text-gray-900">{days} days</p>
+                    <p className="text-xs text-gray-500">{formatDate(request.submittedAt)}</p>
+                  </div>
+                </div>
+                <div className="mt-3">
+                  <p className="text-sm text-gray-900 font-medium">{request.reason}</p>
+                  <p className="text-sm text-gray-600">
+                    {formatDate(request.startDate)} - {formatDate(request.endDate)}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Personal Information Summary */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Personal Information</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <button className="btn-primary w-full">
-            <FileText className="h-4 w-4 mr-2" />
-            Submit Leave Request
-          </button>
-          <button className="btn-secondary w-full">
-            <Calendar className="h-4 w-4 mr-2" />
-            View Leave History
-          </button>
+          <div>
+            <p className="text-sm font-medium text-gray-600">Full Name</p>
+            <p className="text-gray-900">{user?.firstName} {user?.lastName}</p>
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-600">Email</p>
+            <p className="text-gray-900">{user?.email}</p>
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-600">Department</p>
+            <p className="text-gray-900">{user?.department}</p>
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-600">Role</p>
+            <p className="text-gray-900 capitalize">{user?.role}</p>
+          </div>
         </div>
       </div>
     </div>
-  )
+  );
 }

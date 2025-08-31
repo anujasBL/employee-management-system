@@ -7,7 +7,12 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
+      '@': path.resolve('./src'),
+      '@/components': path.resolve('./src/components'),
+      '@/hooks': path.resolve('./src/hooks'),
+      '@/services': path.resolve('./src/services'),
+      '@/types': path.resolve('./src/types'),
+      '@/utils': path.resolve('./src/utils'),
     },
   },
   server: {
@@ -27,5 +32,9 @@ export default defineConfig({
         },
       },
     },
+  },
+  define: {
+    __DEV__: '"true"',
+    'process.env.NODE_ENV': '"development"',
   },
 })

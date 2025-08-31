@@ -18,8 +18,8 @@ Static host or Vercel (frontend only) with full API integration readiness.
 
 ### **2. Configuration & Tooling**
 
-- **Node Version**: Include `.nvmrc` file with appropriate Node.js version
-- **Environment**: Provide `.env.example` with all required environment variables
+- **Node Version**: if not exists include `.nvmrc` file with appropriate Node.js version
+- **Environment**: if not exists provide `.env.example` with all required environment variables
 - **Code Quality**: ESLint configuration for code linting
 - **Code Formatting**: Prettier configuration for consistent formatting
 - **TypeScript**: `tsconfig.json` with strict mode enabled

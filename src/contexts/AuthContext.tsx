@@ -1,32 +1,35 @@
-import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react'
-import { User, AuthState, LoginCredentials } from '@/types'
-import { authService } from '@/services/api'
+import { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
+import { User, AuthState, LoginCredentials } from '@/types';
+import { api } from '@/services/api';
 
-// Action types
+// Action types for the auth reducer
 type AuthAction =
   | { type: 'LOGIN_START' }
   | { type: 'LOGIN_SUCCESS'; payload: { user: User; token: string } }
   | { type: 'LOGIN_FAILURE'; payload: string }
   | { type: 'LOGOUT' }
-  | { type: 'SET_LOADING'; payload: boolean }
-  | { type: 'UPDATE_USER'; payload: User }
+  | { type: 'LOAD_USER_START' }
+  | { type: 'LOAD_USER_SUCCESS'; payload: User }
+  | { type: 'LOAD_USER_FAILURE' }
+  | { type: 'UPDATE_USER'; payload: Partial<User> };
 
-// Initial state
+// Initial auth state
 const initialState: AuthState = {
   user: null,
   token: localStorage.getItem('auth_token'),
   isAuthenticated: false,
   isLoading: true,
-}
+};
 
-// Reducer function
-const authReducer = (state: AuthState, action: AuthAction): AuthState => {
+// Auth reducer function
+function authReducer(state: AuthState, action: AuthAction): AuthState {
   switch (action.type) {
     case 'LOGIN_START':
       return {
         ...state,
         isLoading: true,
-      }
+      };
+
     case 'LOGIN_SUCCESS':
       return {
         ...state,
@@ -34,7 +37,8 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
         token: action.payload.token,
         isAuthenticated: true,
         isLoading: false,
-      }
+      };
+
     case 'LOGIN_FAILURE':
       return {
         ...state,
@@ -42,7 +46,8 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
         token: null,
         isAuthenticated: false,
         isLoading: false,
-      }
+      };
+
     case 'LOGOUT':
       return {
         ...state,
@@ -50,111 +55,157 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
         token: null,
         isAuthenticated: false,
         isLoading: false,
-      }
-    case 'SET_LOADING':
+      };
+
+    case 'LOAD_USER_START':
       return {
         ...state,
-        isLoading: action.payload,
-      }
-    case 'UPDATE_USER':
+        isLoading: true,
+      };
+
+    case 'LOAD_USER_SUCCESS':
       return {
         ...state,
         user: action.payload,
-      }
+        isAuthenticated: true,
+        isLoading: false,
+      };
+
+    case 'LOAD_USER_FAILURE':
+      return {
+        ...state,
+        user: null,
+        token: null,
+        isAuthenticated: false,
+        isLoading: false,
+      };
+
+    case 'UPDATE_USER':
+      return {
+        ...state,
+        user: state.user ? { ...state.user, ...action.payload } : null,
+      };
+
     default:
-      return state
+      return state;
   }
 }
 
-// Context interface
+// Auth context interface
 interface AuthContextType extends AuthState {
-  login: (credentials: LoginCredentials) => Promise<void>
-  logout: () => Promise<void>
-  updateUser: (user: User) => void
+  login: (credentials: LoginCredentials) => Promise<void>;
+  logout: () => Promise<void>;
+  updateUser: (userData: Partial<User>) => void;
+  refreshUser: () => Promise<void>;
 }
 
-// Create context
-const AuthContext = createContext<AuthContextType | undefined>(undefined)
+// Create the auth context
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Provider component
-export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [state, dispatch] = useReducer(authReducer, initialState)
+// Auth provider component
+interface AuthProviderProps {
+  children: ReactNode;
+}
 
-  // Check authentication status on mount
+export function AuthProvider({ children }: AuthProviderProps) {
+  const [state, dispatch] = useReducer(authReducer, initialState);
+
+  // Load user on mount if token exists
   useEffect(() => {
-    const checkAuth = async () => {
-      const token = localStorage.getItem('auth_token')
-      if (token) {
-        try {
-          const isValid = await authService.validateSession()
-          if (isValid) {
-            const user = await authService.getProfile()
-            dispatch({ type: 'LOGIN_SUCCESS', payload: { user, token } })
-          } else {
-            localStorage.removeItem('auth_token')
-            dispatch({ type: 'LOGOUT' })
-          }
-        } catch (error) {
-          localStorage.removeItem('auth_token')
-          dispatch({ type: 'LOGOUT' })
-        }
-      } else {
-        dispatch({ type: 'SET_LOADING', payload: false })
-      }
+    if (state.token) {
+      loadUser();
+    } else {
+      dispatch({ type: 'LOAD_USER_FAILURE' });
     }
+  }, []);
 
-    checkAuth()
-  }, [])
+  // Set token in API service when it changes
+  useEffect(() => {
+    if (state.token) {
+      apiService.setAuthToken(state.token);
+    } else {
+      apiService.clearAuthToken();
+    }
+  }, [state.token]);
+
+  // Load user profile from API
+  const loadUser = async () => {
+    try {
+      dispatch({ type: 'LOAD_USER_START' });
+      const user = await api.auth.profile();
+      dispatch({ type: 'LOAD_USER_SUCCESS', payload: user });
+    } catch (error) {
+      console.error('Failed to load user:', error);
+      dispatch({ type: 'LOAD_USER_FAILURE' });
+      // Clear invalid token
+      localStorage.removeItem('auth_token');
+    }
+  };
 
   // Login function
   const login = async (credentials: LoginCredentials) => {
     try {
-      dispatch({ type: 'LOGIN_START' })
-      const { user, token } = await authService.login(credentials)
+      dispatch({ type: 'LOGIN_START' });
+      const response = await api.auth.login(credentials);
       
       // Store token in localStorage
-      localStorage.setItem('auth_token', token)
+      localStorage.setItem('auth_token', response.token);
       
-      dispatch({ type: 'LOGIN_SUCCESS', payload: { user, token } })
+      dispatch({
+        type: 'LOGIN_SUCCESS',
+        payload: { user: response.user, token: response.token },
+      });
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Login failed'
-      dispatch({ type: 'LOGIN_FAILURE', payload: errorMessage })
-      throw new Error(errorMessage)
+      const errorMessage = error.message || 'Login failed';
+      dispatch({ type: 'LOGIN_FAILURE', payload: errorMessage });
+      throw new Error(errorMessage);
     }
-  }
+  };
 
   // Logout function
   const logout = async () => {
     try {
-      await authService.logout()
+      await api.auth.logout();
     } catch (error) {
-      console.error('Logout error:', error)
+      console.error('Logout error:', error);
     } finally {
-      localStorage.removeItem('auth_token')
-      dispatch({ type: 'LOGOUT' })
+      // Clear local storage and state regardless of API call success
+      localStorage.removeItem('auth_token');
+      dispatch({ type: 'LOGOUT' });
     }
-  }
+  };
 
-  // Update user function
-  const updateUser = (user: User) => {
-    dispatch({ type: 'UPDATE_USER', payload: user })
-  }
+    // Update user function
+  const updateUser = (userData: Partial<User>) => {
+    dispatch({ type: 'UPDATE_USER', payload: userData });
+  };
+
+  // Refresh user data
+  const refreshUser = async () => {
+    if (state.token) {
+      await loadUser();
+    }
+  };
 
   const value: AuthContextType = {
     ...state,
     login,
     logout,
     updateUser,
-  }
+    refreshUser,
+  };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 // Custom hook to use auth context
-export const useAuth = (): AuthContextType => {
-  const context = useContext(AuthContext)
+export function useAuth() {
+  const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider')
+    throw new Error('useAuth must be used within an AuthProvider');
   }
-  return context
+  return context;
 }
+
+// Import apiService to avoid circular dependency
+import { apiService } from '@/services/api';

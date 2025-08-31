@@ -1,150 +1,216 @@
-import axios, { AxiosInstance, AxiosResponse } from 'axios'
-import { BaseEntity, ApiResponse, PaginatedResponse, QueryParams } from '@/types'
+import axios, { AxiosInstance, AxiosResponse, AxiosError } from 'axios';
+import { ApiResponse, PaginatedResponse, QueryParams, ApiError } from '@/types';
 
-// API configuration
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://vibe-code-generic-api-rehearsal-01.onrender.com'
-const API_TIMEOUT = parseInt(import.meta.env.VITE_API_TIMEOUT || '10000')
+/**
+ * Generic API service for handling CRUD operations on any entity type
+ * Implements the standard endpoints: GET_ALL, GET_BY_ID, SAVE_NEW, UPDATE, DELETE
+ */
+export class ApiService {
+  private client: AxiosInstance;
+  private baseURL: string;
 
-// Create axios instance
-const apiClient: AxiosInstance = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: API_TIMEOUT,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-})
+  constructor(baseURL: string = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api') {
+    this.baseURL = baseURL;
+    this.client = axios.create({
+      baseURL: this.baseURL,
+      timeout: parseInt(import.meta.env.VITE_API_TIMEOUT || '10000'),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
 
-// Request interceptor for authentication
-apiClient.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('auth_token')
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
-    }
-    return config
-  },
-  (error) => {
-    return Promise.reject(error)
+    // Request interceptor for authentication
+    this.client.interceptors.request.use(
+      (config) => {
+        const token = localStorage.getItem('auth_token');
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+      },
+      (error) => Promise.reject(error)
+    );
+
+    // Response interceptor for error handling
+    this.client.interceptors.response.use(
+      (response: AxiosResponse) => response,
+      (error: AxiosError) => {
+        if (error.response?.status === 401) {
+          // Handle unauthorized access
+          localStorage.removeItem('auth_token');
+          window.location.href = '/login';
+        }
+        return Promise.reject(this.handleApiError(error));
+      }
+    );
   }
-)
 
-// Response interceptor for error handling
-apiClient.interceptors.response.use(
-  (response: AxiosResponse) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      // Handle unauthorized access
-      localStorage.removeItem('auth_token')
-      window.location.href = '/login'
-    }
-    return Promise.reject(error)
+  /**
+   * Generic entity service factory
+   * Creates a service for any entity type with standard CRUD operations
+   */
+  entity<T>(entityName: string) {
+    return {
+      /**
+       * Get all entities with optional pagination and filtering
+       */
+      getAll: async (params?: QueryParams): Promise<PaginatedResponse<T>> => {
+        const response = await this.client.get<ApiResponse<PaginatedResponse<T>>>(`/${entityName}`, {
+          params,
+        });
+        return response.data.data;
+      },
+
+      /**
+       * Get entity by ID
+       */
+      getById: async (id: string): Promise<T> => {
+        const response = await this.client.get<ApiResponse<T>>(`/${entityName}/${id}`);
+        return response.data.data;
+      },
+
+      /**
+       * Create new entity
+       */
+      saveNew: async (data: Partial<T>): Promise<T> => {
+        const response = await this.client.post<ApiResponse<T>>(`/${entityName}`, data);
+        return response.data.data;
+      },
+
+      /**
+       * Update existing entity
+       */
+      update: async (id: string, data: Partial<T>): Promise<T> => {
+        const response = await this.client.put<ApiResponse<T>>(`/${entityName}/${id}`, data);
+        return response.data.data;
+      },
+
+      /**
+       * Delete entity
+       */
+      delete: async (id: string): Promise<void> => {
+        await this.client.delete(`/${entityName}/${id}`);
+      },
+
+      /**
+       * Search entities
+       */
+      search: async (query: string, params?: QueryParams): Promise<PaginatedResponse<T>> => {
+        const response = await this.client.get<ApiResponse<PaginatedResponse<T>>>(`/${entityName}/search`, {
+          params: { ...params, q: query },
+        });
+        return response.data.data;
+      },
+    };
   }
-)
-
-// Generic entity service
-export const createEntityService = <T extends BaseEntity>(entityName: string) => ({
-  /**
-   * Get all entities with optional pagination and filtering
-   */
-  getAll: async (params?: QueryParams): Promise<PaginatedResponse<T>> => {
-    const response = await apiClient.get<ApiResponse<PaginatedResponse<T>>>(`/${entityName}`, { params })
-    return response.data.data
-  },
 
   /**
-   * Get entity by ID
+   * Authentication endpoints
    */
-  getById: async (id: string): Promise<T> => {
-    const response = await apiClient.get<ApiResponse<T>>(`/${entityName}/${id}`)
-    return response.data.data
-  },
+  auth = {
+    login: async (credentials: { username: string; password: string }) => {
+      const response = await this.client.post<ApiResponse<{ user: any; token: string }>>('/auth/login', credentials);
+      return response.data.data;
+    },
+
+    logout: async () => {
+      await this.client.post('/auth/logout');
+      localStorage.removeItem('auth_token');
+    },
+
+    profile: async () => {
+      const response = await this.client.get<ApiResponse<any>>('/auth/profile');
+      return response.data.data;
+    },
+
+    validate: async () => {
+      const response = await this.client.get<ApiResponse<boolean>>('/auth/validate');
+      return response.data.data;
+    },
+  };
 
   /**
-   * Create new entity
+   * Dashboard endpoints
    */
-  saveNew: async (data: Partial<T>): Promise<T> => {
-    const response = await apiClient.post<ApiResponse<T>>(`/${entityName}`, data)
-    return response.data.data
-  },
+  dashboard = {
+    hr: async () => {
+      const response = await this.client.get<ApiResponse<any>>('/dashboard/hr');
+      return response.data.data;
+    },
+
+    employee: async () => {
+      const response = await this.client.get<ApiResponse<any>>('/dashboard/employee');
+      return response.data.data;
+    },
+  };
 
   /**
-   * Update existing entity
+   * Handle API errors and convert them to consistent format
    */
-  update: async (id: string, data: Partial<T>): Promise<T> => {
-    const response = await apiClient.put<ApiResponse<T>>(`/${entityName}/${id}`, data)
-    return response.data.data
-  },
-
-  /**
-   * Delete entity
-   */
-  delete: async (id: string): Promise<void> => {
-    await apiClient.delete(`/${entityName}/${id}`)
-  },
-})
-
-// Specific entity services
-export const employeeService = createEntityService('employees')
-export const leaveRequestService = createEntityService('leave-requests')
-export const userService = createEntityService('users')
-
-// Authentication service
-export const authService = {
-  /**
-   * User login
-   */
-  login: async (credentials: { username: string; password: string }) => {
-    const response = await apiClient.post<ApiResponse<{ user: any; token: string; expiresAt: Date }>>('/auth/login', credentials)
-    return response.data.data
-  },
-
-  /**
-   * User logout
-   */
-  logout: async (): Promise<void> => {
-    await apiClient.post('/auth/logout')
-    localStorage.removeItem('auth_token')
-  },
-
-  /**
-   * Get current user profile
-   */
-  getProfile: async () => {
-    const response = await apiClient.get<ApiResponse<any>>('/auth/profile')
-    return response.data.data
-  },
-
-  /**
-   * Validate current session
-   */
-  validateSession: async (): Promise<boolean> => {
-    try {
-      await apiClient.get('/auth/validate')
-      return true
-    } catch {
-      return false
+  private handleApiError(error: AxiosError): ApiError {
+    if (error.response) {
+      const { status, data } = error.response;
+      const responseData = data as any;
+      return {
+        message: responseData?.message || `HTTP ${status} error`,
+        code: `HTTP_${status}`,
+        details: responseData as Record<string, any>,
+      };
+    } else if (error.request) {
+      return {
+        message: 'Network error - no response received',
+        code: 'NETWORK_ERROR',
+      };
+    } else {
+      return {
+        message: error.message || 'Unknown error occurred',
+        code: 'UNKNOWN_ERROR',
+      };
     }
-  },
+  }
+
+  /**
+   * Get the base URL for the API service
+   */
+  getBaseURL(): string {
+    return this.baseURL;
+  }
+
+  /**
+   * Set authentication token
+   */
+  setAuthToken(token: string): void {
+    localStorage.setItem('auth_token', token);
+    this.client.defaults.headers.common.Authorization = `Bearer ${token}`;
+  }
+
+  /**
+   * Clear authentication token
+   */
+  clearAuthToken(): void {
+    localStorage.removeItem('auth_token');
+    delete this.client.defaults.headers.common.Authorization;
+  }
 }
 
-// Dashboard service
-export const dashboardService = {
-  /**
-   * Get HR dashboard metrics
-   */
-  getHRMetrics: async () => {
-    const response = await apiClient.get<ApiResponse<any>>('/dashboard/hr')
-    return response.data.data
-  },
+// Create and export the main API service instance
+export const apiService = new ApiService();
 
-  /**
-   * Get employee dashboard data
-   */
-  getEmployeeData: async () => {
-    const response = await apiClient.get<ApiResponse<any>>('/dashboard/employee')
-    return response.data.data
-  },
-}
+// Export specific entity services for convenience
+export const api = {
+  // Generic entity service
+  entity: <T>(entityName: string) => apiService.entity<T>(entityName),
 
-// Export the main API client for custom requests
-export default apiClient
+  // Specific entity APIs
+  employees: apiService.entity<any>('employees'),
+  leaveRequests: apiService.entity<any>('leave-requests'),
+  users: apiService.entity<any>('users'),
+
+  // Authentication
+  auth: apiService.auth,
+
+  // Dashboard
+  dashboard: apiService.dashboard,
+};
+
+export default apiService;
